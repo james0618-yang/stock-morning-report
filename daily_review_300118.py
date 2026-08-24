@@ -18,6 +18,7 @@ import os
 import sys
 import json
 import time
+import re
 import datetime
 import smtplib
 import email.utils
@@ -51,8 +52,8 @@ OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 REVIEW_FILE = os.path.join(OUTPUT_DIR, "daily_review_300118.html")
 
 # 抓取重试
-MAX_RETRY = 3
-RETRY_INTERVAL = 5
+MAX_RETRY = 5
+RETRY_INTERVAL = 2
 
 # 定时执行时间（24小时制，北京时间）
 SCHEDULE_HOUR = 16
@@ -119,15 +120,47 @@ POLICY_FRAMEWORK = [
 
 _em_session = requests.Session()
 
+# 东方财富接口的多 host 备援（限流/拦截时轮换）
+_EM_HOST_ALIASES = {
+    "push2.eastmoney.com": ["push2.eastmoney.com", "push2delay.eastmoney.com"],
+    "push2his.eastmoney.com": ["push2his.eastmoney.com", "push2.eastmoney.com"],
+}
+
+
+def _candidate_urls(url):
+    out, seen = [], set()
+    for host, alts in _EM_HOST_ALIASES.items():
+        if host in url:
+            for cand in [host] + alts:
+                if cand not in seen:
+                    seen.add(cand)
+                    out.append(url.replace(host, cand, 1))
+            break
+    else:
+        out = [url]
+    return out
+
 
 def _get_json(url, params, timeout=12):
+    """带多 host 轮换与空响应重试的 JSON 抓取。全部失败返回 None。"""
     last_err = None
-    for _ in range(MAX_RETRY):
-        try:
-            resp = _em_session.get(url, params=params, headers=EM_HEADERS, timeout=timeout)
-            return resp.json()
-        except Exception as e:  # noqa
-            last_err = e
+    candidates = _candidate_urls(url)
+    for attempt in range(MAX_RETRY):
+        for cu in candidates:
+            try:
+                resp = _em_session.get(cu, params=params, headers=EM_HEADERS, timeout=timeout)
+                if resp.status_code != 200:
+                    last_err = f"HTTP {resp.status_code}"
+                    continue
+                text = resp.text.strip()
+                if not text:
+                    last_err = "empty body"
+                    continue
+                return resp.json()
+            except Exception as e:  # noqa
+                last_err = e
+                continue
+        if attempt < MAX_RETRY - 1:
             time.sleep(RETRY_INTERVAL)
     print(f"[WARN] 请求失败 {url}: {last_err}")
     return None
@@ -135,6 +168,14 @@ def _get_json(url, params, timeout=12):
 
 def fetch_quote():
     """个股实时/收盘行情。返回 dict；失败返回 None。"""
+    q = _fetch_quote_em()
+    if not q:
+        print("[WARN] 东方财富行情失败，改用新浪备用源")
+        q = fetch_quote_sina()
+    return q
+
+
+def _fetch_quote_em():
     fields = ("f12,f13,f14,f43,f44,f45,f46,f47,f48,f57,f58,f60,"
               "f116,f117,f162,f167,f168,f169,f171,f172")
     d = _get_json(EM_GET_API, {
@@ -172,8 +213,58 @@ def fetch_quote():
     }
 
 
+def fetch_quote_sina():
+    """新浪行情备用源（不含换手率/市盈率/市值，缺失项填 None）。失败返回 None。"""
+    try:
+        h = {"User-Agent": "Mozilla/5.0", "Referer": "https://finance.sina.com.cn"}
+        r = requests.get("https://hq.sinajs.cn/list=sz300118", headers=h, timeout=15)
+        r.encoding = "gbk"
+        txt = r.text
+        # 形如 var hq_str_sz300118="名称,今开,昨收,现价,最高,最低,...,成交量(股),成交额(元),...,日期,时间";
+        m = re.search(r'=("(.*)")\s*;', txt)
+        if not m:
+            return None
+        p = m.group(2).split(",")
+        if len(p) < 10:
+            return None
+        price = float(p[3])
+        prev_close = float(p[2])
+        if prev_close == 0:
+            return None
+        return {
+            "name": p[0] or STOCK_NAME,
+            "code": STOCK_CODE,
+            "price": price,
+            "open": float(p[1]),
+            "high": float(p[4]),
+            "low": float(p[5]),
+            "prev_close": prev_close,
+            "volume": float(p[8]) / 100.0,   # 股→手
+            "amount": float(p[9]),            # 元
+            "turnover": None,
+            "amplitude": None,
+            "pe_ttm": None,
+            "vol_ratio": None,
+            "limit_up": None,
+            "limit_down": None,
+            "total_mv": None,
+            "float_mv": None,
+        }
+    except Exception as e:  # noqa
+        print(f"[WARN] 新浪行情抓取失败: {e}")
+        return None
+
+
 def fetch_kline(datalen=120):
     """个股日K（前复权），返回 list[dict]（升序）。失败返回 None。"""
+    out = _fetch_kline_em(datalen)
+    if not out:
+        print("[WARN] 东方财富日K失败，改用新浪备用源")
+        out = fetch_kline_sina(datalen)
+    return out
+
+
+def _fetch_kline_em(datalen=120):
     d = _get_json(EM_KLINE_API, {
         "secid": SECID,
         "fields1": "f1,f2,f3,f4,f5,f6",
@@ -205,6 +296,35 @@ def fetch_kline(datalen=120):
         except ValueError:
             continue
     return out if out else None
+
+
+def fetch_kline_sina(datalen=120):
+    """新浪日K 备用源（含前复权近似，成交量由股转手）。失败返回 None。"""
+    try:
+        h = {"User-Agent": "Mozilla/5.0", "Referer": "https://finance.sina.com.cn"}
+        r = requests.get(
+            "https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData",
+            params={"symbol": "sz300118", "scale": 240, "ma": "no", "datalen": datalen},
+            headers=h, timeout=15)
+        arr = r.json()
+        if not isinstance(arr, list) or not arr:
+            return None
+        out = []
+        for x in arr:
+            vol = float(x.get("volume", 0)) / 100.0  # 新浪为股，转手以对齐东财口径
+            out.append({
+                "date": x["day"],
+                "open": float(x["open"]),
+                "close": float(x["close"]),
+                "high": float(x["high"]),
+                "low": float(x["low"]),
+                "volume": vol,
+                "amount": None,
+            })
+        return out if out else None
+    except Exception as e:  # noqa
+        print(f"[WARN] 新浪日K抓取失败: {e}")
+        return None
 
 
 def fetch_fund_flow(days=10):
@@ -1089,7 +1209,10 @@ def generate_review():
 
 
 def run_once():
-    generate_review()
+    html = generate_review()
+    if html is None:
+        # 数据抓取失败，明确以非 0 退出，使 CI 工作流如实失败而非误报成功
+        sys.exit(1)
 
 
 def run_schedule():

@@ -33,15 +33,21 @@ jobs:
         run: python3 daily_review_300118.py once
 
       - name: 提交并推送
+        if: success()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add daily_review_300118.html
-          if git diff --cached --quiet; then
-            echo "无变化，跳过提交"
+          if [ -f daily_review_300118.html ]; then
+            git add daily_review_300118.html
+            if git diff --cached --quiet; then
+              echo "无变化，跳过提交"
+            else
+              git commit -m "chore: 东方日升每日复盘 $(date +'%Y-%m-%d')"
+              git push
+            fi
           else
-            git commit -m "chore: 东方日升每日复盘 $(date +'%Y-%m-%d')"
-            git push
+            echo "HTML 未生成，跳过提交"
+            exit 1
           fi
 
       - name: 发送邮件到 QQ 邮箱
