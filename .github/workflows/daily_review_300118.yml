@@ -1,0 +1,80 @@
+name: 东方日升每日复盘
+
+on:
+  schedule:
+    # GitHub Actions 的 cron 使用 UTC。
+    # 北京时间 16:30（盘后） = UTC 08:30，故用 30 8 * * *
+    - cron: "30 8 * * *"
+  workflow_dispatch: {}   # 允许在 Actions 页面手动触发测试
+
+permissions:
+  contents: write        # 允许 workflow 把生成的 HTML commit 回仓库
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 配置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安装依赖
+        run: pip install --no-cache-dir requests
+
+      - name: 生成每日复盘
+        run: python3 daily_review_300118.py once
+
+      - name: 提交并推送
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add daily_review_300118.html
+          if git diff --cached --quiet; then
+            echo "无变化，跳过提交"
+          else
+            git commit -m "chore: 东方日升每日复盘 $(date +'%Y-%m-%d')"
+            git push
+          fi
+
+      - name: 发送邮件到 QQ 邮箱
+        if: success()
+        env:
+          SMTP_HOST: smtp.qq.com
+          SMTP_PORT: "465"
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          SMTP_TO: ${{ secrets.SMTP_TO }}
+        run: |
+          python3 - <<'PY'
+          import os, smtplib, ssl
+          from email.mime.text import MIMEText
+          from email.header import Header
+
+          host = os.environ["SMTP_HOST"]
+          port = int(os.environ["SMTP_PORT"])
+          user = os.environ["SMTP_USER"]
+          pw   = os.environ["SMTP_PASS"]
+          to   = os.environ["SMTP_TO"]
+
+          with open("daily_review_300118.html", "r", encoding="utf-8") as f:
+              html = f.read()
+
+          msg = MIMEText(html, "html", "utf-8")
+          msg["Subject"] = Header("东方日升(300118) 每日复盘", "utf-8")
+          msg["From"]    = user
+          msg["To"]      = to
+
+          ctx = ssl.create_default_context()
+          with smtplib.SMTP_SSL(host, port, context=ctx) as s:
+              s.login(user, pw)
+              s.sendmail(user, [to], msg.as_string())
+          print("邮件已发送至", to)
+          PY
