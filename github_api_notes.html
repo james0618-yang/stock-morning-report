@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>GitHub API 上传文件实战要点</title></head>
+<body style="font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;max-width:760px;margin:24px auto;line-height:1.7;color:#1f2937">
+<h1>GitHub API 上传文件实战要点（含 Actions 工作流）</h1>
+
+<h2>1. 工作流文件必须带 workflow 作用域</h2>
+<p>通过 Personal Access Token 调用 API 写入 <code>.github/workflows/</code> 下的 Actions 文件时，token 必须勾选 <code>workflow</code> 作用域，否则接口返回 404（GitHub 故意不暴露路径是否存在）。普通仓库文件只需 <code>repo</code> 作用域。</p>
+
+<h2>2. schedule cron 使用 UTC</h2>
+<p>GitHub Actions 的 <code>schedule.cron</code> 按 UTC 计。北京时间 08:00 = UTC 00:00，对应 <code>0 0 * * *</code>。</p>
+
+<h2>3. 嵌套路径用 Git Data API 比 Contents API 稳</h2>
+<p>Contents API：<code>PUT /repos/{owner}/{repo}/contents/{path}</code> 创建 <code>.github/workflows/xxx.yml</code> 这类嵌套路径容易 404。</p>
+<p>更稳做法（Git Data API）：</p>
+<ol>
+  <li><code>POST /repos/{owner}/{repo}/git/blobs</code>（base64 内容）→ 拿到 blob_sha</li>
+  <li><code>POST /repos/{owner}/{repo}/git/trees</code>（base_tree=当前 tree + 新文件 entry）→ 拿到 tree_sha</li>
+  <li><code>POST /repos/{owner}/{repo}/git/commits</code>（tree + parents=[base_sha]）→ 拿到 commit_sha</li>
+  <li><code>PATCH /repos/{owner}/{repo}/git/refs/heads/main</code>（sha=commit_sha）</li>
+</ol>
+<p>注意：路径 URL 编码时只编码特殊字符、保留 <code>/</code>，否则 <code>%2F</code> 会导致 404。</p>
+
+<h2>4. Actions 工作流用内置 GITHUB_TOKEN 即可</h2>
+<p>在 workflow 中配置 <code>permissions: contents: write</code>，使用仓库内置 <code>secrets.GITHUB_TOKEN</code>，无需个人 PAT。个人 PAT 仅用于外部脚本调用 API。</p>
+
+<h2>适用场景</h2>
+<ul>
+  <li>无本地 git 客户端时，用 GitHub REST API 建仓 / 传文件</li>
+  <li>自动生成报告并以 commit 形式回写仓库</li>
+  <li>用定时任务替代本机常驻进程</li>
+</ul>
+</body>
+</html>
