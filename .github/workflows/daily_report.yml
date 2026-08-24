@@ -13,7 +13,7 @@ permissions:
 jobs:
   report:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: 检出仓库
         uses: actions/checkout@v4
@@ -34,6 +34,7 @@ jobs:
 
       - name: 提交并推送
         run: |
+          [ -f morning_report.html ] || { echo "报告未生成，跳过提交"; exit 1; }
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add morning_report.html
@@ -54,6 +55,7 @@ jobs:
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           SMTP_TO: ${{ secrets.SMTP_TO }}
         run: |
+          [ -f morning_report.html ] || { echo "报告未生成，无法发邮件"; exit 1; }
           python3 - <<'PY'
           import os, smtplib, ssl
           from email.mime.text import MIMEText
