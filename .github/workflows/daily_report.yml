@@ -43,3 +43,38 @@ jobs:
             git commit -m "chore: 每日早报 $(date +'%Y-%m-%d')"
             git push
           fi
+
+      - name: 发送邮件到 QQ 邮箱
+        if: success()
+        env:
+          SMTP_HOST: smtp.qq.com
+          SMTP_PORT: "465"
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          SMTP_TO: ${{ secrets.SMTP_TO }}
+        run: |
+          python3 - <<'PY'
+          import os, smtplib, ssl
+          from email.mime.text import MIMEText
+          from email.header import Header
+
+          host = os.environ["SMTP_HOST"]
+          port = int(os.environ["SMTP_PORT"])
+          user = os.environ["SMTP_USER"]
+          pw   = os.environ["SMTP_PASS"]
+          to   = os.environ["SMTP_TO"]
+
+          with open("morning_report.html", "r", encoding="utf-8") as f:
+              html = f.read()
+
+          msg = MIMEText(html, "html", "utf-8")
+          msg["Subject"] = Header("每日指数早报", "utf-8")
+          msg["From"]    = user
+          msg["To"]      = to
+
+          ctx = ssl.create_default_context()
+          with smtplib.SMTP_SSL(host, port, context=ctx) as s:
+              s.login(user, pw)
+              s.sendmail(user, [to], msg.as_string())
+          print("邮件已发送至", to)
+          PY
