@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>东方日升(300118) 每日复盘</title>
+<style>
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+         background:#f4f6fa; margin:0; padding:24px; color:#1f2937; }
+  .wrap { max-width:880px; margin:0 auto; background:#fff; border-radius:14px;
+          overflow:hidden; box-shadow:0 6px 24px rgba(0,0,0,.08); }
+  .header { background:linear-gradient(135deg,#0f766e,#10b981); color:#fff; padding:28px 32px; }
+  .header h1 { margin:0; font-size:22px; }
+  .header .meta { margin-top:8px; font-size:13px; opacity:.9; }
+  .legend { background:#ecfdf5; color:#065f46; font-size:12px;
+            padding:8px 32px; display:flex; gap:16px; flex-wrap:wrap; }
+  .legend b.bull { color:#e23b3b; }
+  .legend b.bear { color:#16a34a; }
+  .legend b.mixed { color:#d97706; }
+  .section { padding:18px 32px; }
+  .section h2 { font-size:16px; margin:6px 0 14px; color:#111827;
+                border-left:4px solid #10b981; padding-left:10px; }
+  .top { display:flex; justify-content:space-between; align-items:center;
+         padding:18px 32px 6px; border-top:1px solid #f3f4f6; }
+  .top .name { font-size:18px; font-weight:700; }
+  .top .code { font-size:13px; color:#6b7280; }
+  .price-big { font-size:34px; font-weight:800; font-variant-numeric:tabular-nums; }
+  .chg-big { font-size:16px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .kv-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+             gap:10px; margin-top:8px; }
+  .kv { background:#f8fafc; border:1px solid #eef2f7; border-radius:8px;
+        padding:8px 10px; }
+  .kv-k { display:block; font-size:11px; color:#9ca3af; }
+  .kv-v { display:block; font-size:15px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .card { border:1px solid #eef2f7; border-left-width:4px; border-radius:12px;
+          padding:14px 16px; margin-bottom:12px; background:#fafbfc; }
+  .badge-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .b-name { font-size:15px; font-weight:700; }
+  .badge { font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap; }
+  .ma-row { display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+  .ma { flex:1; min-width:84px; background:#fff; border:1px solid #eef2f7;
+        border-radius:8px; padding:8px 10px; }
+  .ma-n { display:block; font-size:11px; color:#9ca3af; }
+  .ma-v { display:block; font-size:15px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .ma-tag { font-size:11px; }
+  .rg-row { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
+  .rg { flex:1; min-width:84px; text-align:center; background:#fff;
+        border:1px solid #eef2f7; border-radius:8px; padding:8px 6px; }
+  .rg-n { display:block; font-size:11px; color:#9ca3af; }
+  .rg-v { display:block; font-size:14px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .note { font-size:13px; color:#374151; background:#f0fdfa; border:1px solid #ccfbf1;
+          border-radius:8px; padding:10px 12px; margin-top:12px; line-height:1.7; }
+  .ff-list { margin-top:6px; }
+  .ff-row { display:flex; align-items:center; gap:8px; margin:5px 0; font-size:12px; }
+  .ff-date { width:46px; color:#6b7280; font-variant-numeric:tabular-nums; }
+  .ff-bar-wrap { flex:1; background:#f1f5f9; border-radius:4px; height:14px; overflow:hidden; }
+  .ff-bar { height:14px; border-radius:4px; }
+  .ff-val { width:160px; text-align:right; font-variant-numeric:tabular-nums; }
+  .ff-table { width:100%; border-collapse:collapse; margin-top:6px; font-size:13px; }
+  .ff-table th { text-align:left; color:#9ca3af; font-weight:600; padding:4px 6px; border-bottom:1px solid #eef2f7; }
+  .ff-table td { padding:4px 6px; border-bottom:1px solid #f3f4f6; font-variant-numeric:tabular-nums; }
+  .ff-bullets { margin:10px 0 0; padding-left:18px; line-height:1.9; font-size:13px; }
+  .ff-bullets li { margin:2px 0; }
+  .muted { color:#9ca3af; font-size:13px; }
+  .footer { padding:16px 32px; color:#9ca3af; font-size:12px;
+            border-top:1px solid #f3f4f6; line-height:1.6; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <h1>🔍 东方日升（300118）每日复盘</h1>
+      <div class="meta">2026-08-24 07:34 · 星期一 · 数据来源：东方财富</div>
+    </div>
+    <div class="legend">
+      <span>均线排列提示：</span>
+      <span><b class="bull">● 多头排列</b> 价≥MA5≥MA10≥MA20≥MA60（偏多）</span>
+      <span><b class="bear">● 空头排列</b> 价≤MA5≤MA10≤MA20≤MA60（偏空）</span>
+      <span><b class="mixed">● 均线纠结</b> 方向未明</span>
+    </div>
+
+    <div class="top">
+      <div>
+        <div class="name">东方日升 <span class="code">300118 · 创业板</span></div>
+      </div>
+      <div style="text-align:right">
+        <span class="price-big" style="color:#16a34a">9.65</span>
+        <span class="chg-big" style="color:#16a34a">▼ -1.33%</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>今日盘面</h2>
+      <div class="kv-grid">
+        <div class="kv"><span class="kv-k">涨跌幅</span><span class="kv-v"><span style="color:#16a34a">▼ -1.33%</span></span></div><div class="kv"><span class="kv-k">涨跌额</span><span class="kv-v"><span style="color:#16a34a">-0.13</span></span></div><div class="kv"><span class="kv-k">收盘价</span><span class="kv-v"><span style="color:#16a34a">9.65</span></span></div><div class="kv"><span class="kv-k">今开</span><span class="kv-v">9.78</span></div><div class="kv"><span class="kv-k">最高</span><span class="kv-v">10.13</span></div><div class="kv"><span class="kv-k">最低</span><span class="kv-v">9.50</span></div><div class="kv"><span class="kv-k">昨收</span><span class="kv-v">9.78</span></div>
+        <div class="kv"><span class="kv-k">换手率</span><span class="kv-v">-7.62%</span></div><div class="kv"><span class="kv-k">量比</span><span class="kv-v">-0.13</span></div><div class="kv"><span class="kv-k">振幅</span><span class="kv-v">1.33%</span></div><div class="kv"><span class="kv-k">成交额</span><span class="kv-v">2.48亿</span></div><div class="kv"><span class="kv-k">市盈率TTM</span><span class="kv-v">2.74</span></div><div class="kv"><span class="kv-k">总市值</span><span class="kv-v">110.01亿</span></div><div class="kv"><span class="kv-k">流通市值</span><span class="kv-v">89.44亿</span></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>均线 & 区间表现</h2>
+      <div class="card" style="border-color:#f59e0b">
+        <div class="badge-row">
+          <span class="b-name">技术形态</span>
+          <span class="badge" style="background:#f59e0b;color:#fff">均线纠结</span>
+        </div>
+        <div class="ma-row"><div class="ma"><span class="ma-n">MA5</span><span class="ma-v" style="color:#16a34a">9.86</span><span class="ma-tag" style="color:#16a34a">跌破</span></div><div class="ma"><span class="ma-n">MA10</span><span class="ma-v" style="color:#16a34a">10.12</span><span class="ma-tag" style="color:#16a34a">跌破</span></div><div class="ma"><span class="ma-n">MA20</span><span class="ma-v" style="color:#16a34a">10.02</span><span class="ma-tag" style="color:#16a34a">跌破</span></div><div class="ma"><span class="ma-n">MA60</span><span class="ma-v" style="color:#16a34a">11.17</span><span class="ma-tag" style="color:#16a34a">跌破</span></div></div>
+        <div class="rg-row"><div class="rg"><span class="rg-n">近5日</span><span class="rg-v" style="color:#16a34a">-7.74%</span></div><div class="rg"><span class="rg-n">近10日</span><span class="rg-v" style="color:#16a34a">-8.27%</span></div><div class="rg"><span class="rg-n">近20日</span><span class="rg-v" style="color:#e23b3b">+3.65%</span></div><div class="rg"><span class="rg-n">近60日</span><span class="rg-v" style="color:#16a34a">-31.07%</span></div></div>
+      </div>
+      <div class="note">近20日区间：支撑位约 <b>9.22</b> ，压力位约 <b>10.62</b></div>
+    </div>
+
+    <div class="section">
+      <h2>基本面与政策面</h2>
+      
+    <div class="card" style="border-color:#f59e0b">
+      <div class="badge-row">
+        <span class="b-name">基本面研判</span>
+        <span class="badge" style="background:#f59e0b;color:#fff">基本面中性/筑底</span>
+      </div>
+      <div class="note" style="background:#f0f9ff;border-color:#bae6fd;color:#0c4a6e"><b>行业：</b>光伏设备 / 太阳能电池组件制造（申万：光伏设备）<br><b>定位：</b>全球光伏组件出货第一梯队（二线龙头），HJT 异质结技术路线先行者<br><b>主营：</b>太阳能电池组件、光伏电站 EPC、储能系统；海外营收占比较高（欧美/亚太）<br><b>技术：</b>押注 N 型 HJT 异质结路线，区别于行业主流 TOPCon</div>
+      <div style="margin-top:10px;font-size:13px;color:#374151">核心财务（2026年一季报（单季度），来源：妙想/东财）</div>
+      <table class="ff-table"><tr><th>指标</th><th>数值</th></tr><tr><td>报告期</td><td style="color:#374151">2026年一季报（单季度）</td></tr><tr><td>单季营收</td><td style="color:#16a34a">27.02亿（同比 -9.65%）</td></tr><tr><td>单季归母净利润</td><td style="color:#16a34a">-3.61亿（同比 -35.31%）</td></tr><tr><td>销售毛利率</td><td style="color:#16a34a">2.02%</td></tr><tr><td>ROE(加权)</td><td style="color:#16a34a">-4.27%</td></tr><tr><td>资产负债率</td><td style="color:#16a34a">71.24%</td></tr><tr><td>每股净资产</td><td style="color:#374151">7.28元</td></tr><tr><td>经营现金流净额</td><td style="color:#d97706">0.13亿</td></tr><tr><td>研发投入占营收</td><td style="color:#d97706">2.28%</td></tr></table>
+      <div style="margin-top:10px;font-size:13px;color:#374151">机构一致预期（截至 2026-08-23）</div>
+      <table class="ff-table"><tr><th>年度</th><th>预测归母净利(亿)</th><th>增速</th></tr><tr><td>2026E</td><td style="color:#16a34a">-5.18</td><td>+82.5%</td></tr><tr><td>2027E</td><td style="color:#e23b3b">+7.43</td><td>+269.5%</td></tr><tr><td>2028E</td><td style="color:#e23b3b">+14.43</td><td>+106.0%</td></tr></table>
+      <div class="note" style="margin-top:10px">动态估值（基于现价 9.65 与市值）：PB <b>1.33（历史低位）</b>；PS <b>1.02（中性）</b>；PE(TTM) <b>2.74</b>。年化营收约 108.08亿。 <span style="color:#b45309">（最新单季仍亏损，PE(TTM) 为滚动口径，盈利修复前参考有限）</span></div>
+      <ul class="ff-bullets"><li><b style="color:#e23b3b">估值面：历史低位</b> — <span style="color:#4b5563">PB 贴近净资产，安全边际较高但需警惕价值陷阱</span></li><li><b style="color:#16a34a">盈利面：盈利承压</b> — <span style="color:#4b5563">最新报告期亏损（归母 -3.61亿）、毛利率仅 2.022%、ROE -4.27%，制造端价格战致盈利触底</span></li><li><b style="color:#d97706">成长面：短期下滑、困境反转预期</b> — <span style="color:#4b5563">营收同比 -9.648%，但机构一致预期 2027E 扭亏至 7.43亿，隐含行业出清后修复</span></li><li><b style="color:#16a34a">偿债/现金流：杠杆偏高</b> — <span style="color:#4b5563">资产负债率 71.24%，重资产+HJT 产线投入大，财务弹性有限；经营现金流 0.133亿（微正），对高负债的覆盖偏弱</span></li></ul>
+    </div>
+    <div class="card" style="border-color:#fdba74">
+      <div class="badge-row">
+        <span class="b-name">行业与政策面</span>
+        <span class="badge" style="background:#d97706;color:#fff">长期友好/短期承压</span>
+      </div>
+      <table class="ff-table"><tr><th>要点</th><th>说明</th><th>方向</th></tr><tr><td>长期需求支撑</td><td>国内双碳目标、风光大基地建设、全球能源转型加速，光伏长期装机需求向上</td><td style="color:#e23b3b">偏多</td></tr><tr><td>电价市场化（136号文）</td><td>2025 年起新能源全面参与电力市场交易，电价波动加大、消纳与收益率承压</td><td style="color:#16a34a">偏空</td></tr><tr><td>产能出清 / 反内卷</td><td>政策推动落后光伏产能退出、兼并重组，利好龙头但短期行业仍处价格战底部</td><td style="color:#d97706">中性</td></tr><tr><td>海外贸易壁垒</td><td>美国 UFLPA 扣留、欧盟对华光伏反补贴税、印度关税等，压制出口与盈利</td><td style="color:#16a34a">偏空</td></tr><tr><td>电网与储能配套</td><td>源网荷储一体化、配储需求提升，有利于具备储能布局的组件企业</td><td style="color:#e23b3b">偏多</td></tr></table>
+      <ul class="ff-bullets"><li><b style="color:#d97706">行业景气：周期底部、出清进行中</b> — <span style="color:#4b5563">光伏制造产能过剩、组件价格跌破成本线，全行业盈利触底；落后产能出清后格局优化</span></li><li><b style="color:#d97706">政策综合：长期友好、短期承压</b> — <span style="color:#4b5563">能源转型方向不变支撑长期需求；但海外贸易壁垒与电价市场化短期压制出口与收益率</span></li><li><b style="color:#d97706">公司相关：高负债 + HJT 重资产 + 高海外占比</b> — <span style="color:#4b5563">对组件价格、融资成本与贸易政策高度敏感；HJT 若率先放量可形成差异化，否则面临 TOPCon 主流挤压</span></li></ul>
+      <div class="note" style="margin-top:10px;background:#fff7ed;border-color:#fed7aa;color:#7c2d12">
+        提示：政策与行业景气为静态框架研判，实时政策、关税与装机数据请以交易所公告及权威新闻为准。</div>
+    </div>
+    </div>
+
+    <div class="section">
+      <h2>量能与资金</h2>
+      <div class="note">量能：今日成交量约为 5 日均量的 <b style="color:#16a34a">0.90倍</b>（温和缩量），5日均量 0.28亿，10日均量 0.30亿</div>
+      
+    <div class="card" style="border-color:#16a34a">
+      <div class="badge-row">
+        <span class="b-name">资金面研判</span>
+        <span class="badge" style="background:#16a34a;color:#fff">资金面偏空</span>
+      </div>
+      <table class="ff-table"><tr><th>类别</th><th>净流入(亿)</th><th>方向</th></tr><tr><td>主力资金</td><td style="color:#16a34a">-0.10</td><td style="color:#16a34a">流出</td></tr><tr><td>超大单</td><td style="color:#e23b3b">+0.15</td><td style="color:#e23b3b">流入</td></tr><tr><td>大单</td><td style="color:#16a34a">-0.04</td><td style="color:#16a34a">流出</td></tr><tr><td>中单</td><td style="color:#e23b3b">+0.00</td><td style="color:#e23b3b">流入</td></tr><tr><td>小单(散户)</td><td style="color:#16a34a">-0.10</td><td style="color:#16a34a">流出</td></tr></table>
+      <div class="note" style="margin-top:10px">主力净流入占今日成交额 <b style="color:#16a34a">-4.10%</b>（明显）</div>
+      <ul class="ff-bullets"><li><b style="color:#16a34a">资金博弈：资金全面流出</b> — <span style="color:#4b5563">主力与散户共振离场，抛压较重</span></li><li><b style="color:#d97706">大单结构：超大单流入、大单流出</b> — <span style="color:#4b5563">机构建仓但大户有分歧</span></li><li><b style="color:#16a34a">近期趋势：近1日主力净流出</b> — <span style="color:#4b5563">观察主力资金连续性</span></li><li><b style="color:#16a34a">价量配合：价跌主力流出</b> — <span style="color:#4b5563">资金出逃与下跌共振，趋势偏弱</span></li></ul>
+    </div>
+      <div style="margin-top:12px">
+        <div style="font-size:13px;color:#374151;margin-bottom:6px">近 10 日主力资金净流入（红=流入，绿=流出）</div>
+        <div class="ff-list"><div class="ff-row"><span class="ff-date">08-24</span><div class="ff-bar-wrap"><div class="ff-bar" style="width:100.0%;background:#16a34a"></div></div><span class="ff-val" style="color:#16a34a">流出0.10亿</span></div></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      本报告由脚本于每个交易日盘后（16:30 北京时间）自动生成，仅供参考，不构成任何投资建议。<br>
+      行情 / 日K（前复权）/ 主力资金流向均来自东方财富；均线 MA60 需约 60 个交易日数据积累后趋于稳定。
+    </div>
+  </div>
+</body>
+</html>
