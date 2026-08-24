@@ -24,6 +24,21 @@
 <h2>4. Actions 工作流用内置 GITHUB_TOKEN 即可</h2>
 <p>在 workflow 中配置 <code>permissions: contents: write</code>，使用仓库内置 <code>secrets.GITHUB_TOKEN</code>，无需个人 PAT。个人 PAT 仅用于外部脚本调用 API。</p>
 
+<h2>5. Actions Secrets 必须用仓库公钥加密写入（不能传明文）</h2>
+<p>通过 API 写入仓库 Secret（<code>PUT /repos/{owner}/{repo}/actions/secrets/{name}</code>）时，不能用明文 <code>encrypted_value</code>，否则返回 422（<code>"key_id" wasn't supplied</code>）。正确流程：</p>
+<ol>
+  <li><code>GET .../actions/secrets/public-key</code> → 拿到 <code>key</code>（base64 公钥）与 <code>key_id</code></li>
+  <li>用 libsodium sealed-box 对明文加密：<code>SealedBox(PublicKey(key, encoder=Base64Encoder)).encrypt(value)</code>
+    <ul>
+      <li>公钥必须用 <code>Base64Encoder</code> 解码成原始 32 字节；直接 <code>PublicKey(key.encode())</code> 会报 “must be exactly 32 bytes long”</li>
+      <li>Python 用 <code>pynacl</code>（<code>pip install pynacl</code>）；加密结果再 base64 编码</li>
+    </ul>
+  </li>
+  <li><code>PUT .../secrets/{name}</code>，body 为 <code>{"encrypted_value": &lt;base64密文&gt;, "key_id": &lt;key_id&gt;}</code></li>
+  <li>写入后 workflow 中通过 <code>${{ secrets.NAME }}</code> 引用，凭据不落盘、不进代码。</li>
+</ol>
+<p>补充：QQ 邮箱 SMTP 不能用登录密码发信，必须开启 IMAP/SMTP 服务并生成 <strong>授权码</strong>（16 位），SMTP 服务器 <code>smtp.qq.com:465</code>（SSL）。</p>
+
 <h2>适用场景</h2>
 <ul>
   <li>无本地 git 客户端时，用 GitHub REST API 建仓 / 传文件</li>
