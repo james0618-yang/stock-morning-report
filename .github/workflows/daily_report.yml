@@ -1,4 +1,4 @@
-name: 每日指数早报
+name: 每日板块指数早报
 
 on:
   schedule:
@@ -37,6 +37,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add morning_report.html
+          [ -f us_history.json ] && git add us_history.json
           if git diff --cached --quiet; then
             echo "无变化，跳过提交"
           else
@@ -68,7 +69,7 @@ jobs:
               html = f.read()
 
           msg = MIMEText(html, "html", "utf-8")
-          msg["Subject"] = Header("每日指数早报", "utf-8")
+          msg["Subject"] = Header("每日板块指数早报", "utf-8")
           msg["From"]    = user
           msg["To"]      = to
 
